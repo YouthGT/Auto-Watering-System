@@ -11,7 +11,7 @@
 #include <Blinker.h>     //Blinker官方库
 #define DHTPIN 15        //对应D8针脚接入DHT11
 #define DHTTYPE DHT11    //选择传感器类型 DHT11
-#include <DHT.h>         //温度传感器运行库 自用DHT11                    
+#include <DHT.h>         //温度传感器运行库                    
 DHT dht(DHTPIN, DHTTYPE);
 
 uint32_t read_time = 0;
