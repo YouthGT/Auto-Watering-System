@@ -45,7 +45,7 @@
 在blinkerAPP中需要进行导入配置
 
 导入后界面如图所示
-![](images/Blinker.jpg)
+![](images/Blinker界面.jpg)
 
 
 ## 硬件电路
