@@ -42,7 +42,7 @@ BlinkerText Tex3("tex-3"); //文本3 时间信息
 //char auth[] = "7d29d0baddb6";
 //char type[] = "arduino";
 
-char auth[] = "7d29d0baddb6"; //key
+char auth[] = "8fe5abd7fb96"; //key
 char ssid[] = "156";         //wifi name
 char pswd[] = "651651651";    //password
 
