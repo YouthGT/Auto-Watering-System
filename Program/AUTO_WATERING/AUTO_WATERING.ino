@@ -11,17 +11,18 @@
 #include <Blinker.h>     //Blinker官方库
 #define DHTPIN 15        //对应D8针脚接入DHT11
 #define DHTTYPE DHT11    //选择传感器类型 DHT11
-#include <DHT.h>         //温度传感器运行库                    
+#include <DHT.h>         //温度传感器运行库     
+
 DHT dht(DHTPIN, DHTTYPE);
 
 uint32_t read_time = 0;
 float temp_read,humi_read; //定义获取DHT11的数据
 int sensorPin = A0;  //设置模拟口A0为信号输入端，土壤传感器 esp8266只有一个模拟输入
 int sensorValue = 0; //初始化土壤模拟信号的变量
-float precentsensorValue = 0; //初始化湿度变量
+float SoilPrecentValue = 0; //初始化湿度变量
 int waterPumpPin = D2; //继电器 水泵控制 
-int sliderValue = 40;    //土壤湿度阈值 通过土壤传感器
-int sliderValue1 = 20;   //空气温度阈值 通过气温传感器
+int SoilSliderValue = 40;    //土壤湿度阈值 通过土壤传感器
+int TempSliderValue = 20;   //空气温度阈值 通过气温传感器
 bool manualFlag = false; //手动控制默认关闭
 
 U8G2_SSD1306_128X64_NONAME_1_4W_SW_SPI u8g2(U8G2_R0, D5 /*clock*/, D6 /*data*/, D7 /*cs*/, D3 /*dc*/, D4 /*reset*/);//定义OLED的引脚
@@ -48,13 +49,13 @@ char pswd[] = "651651651";    //password
 
 void slider1_callback(int32_t value)//土壤湿度滑块
 {
-  sliderValue = value;
-  BLINKER_LOG("get slider value: ", value);
+  SoilSliderValue = value;
+  BLINKER_LOG("get SoilSliderValue value: ", value);
 }
 
 void slider2_callback(int32_t value)//空气湿度滑块
 {
-  sliderValue1 = value;
+  TempSliderValue = value;
   BLINKER_LOG("get slider2 value: ", value);
 }
 
@@ -62,12 +63,12 @@ void heartbeat() //心跳包回调函数
 {
   if (digitalRead(waterPumpPin) == HIGH)
     Tex2.print("暂停浇水");
-  else if (digitalRead(waterPumpPin) == LOW)
+  else if(digitalRead(waterPumpPin) == LOW)
     Tex2.print("正在浇水");
   Tex3.print(rts());
-  Slider1.print(sliderValue);
-  Slider2.print(sliderValue1);
-  NumSoil.print(precentsensorValue);
+  Slider1.print(SoilSliderValue);
+  Slider2.print(TempSliderValue);
+  NumSoil.print(SoilPrecentValue);
   Numtem.print(temp_read);
   Numhum.print(humi_read);
 }
@@ -89,6 +90,7 @@ void BtnManual_callback(const String &state) //手动浇花按键回调函数
     Tex1.print("暂停浇水");
     BtnManual.print("off");
   }
+  loop();
 }
 void dataRead(const String & data)
 {
@@ -105,7 +107,7 @@ void dataStorage()//数据存储
 {
     Blinker.dataStorage("cha-temp", temp_read);
     Blinker.dataStorage("cha-humi", humi_read);
-    Blinker.dataStorage("cha-hum",precentsensorValue);
+    Blinker.dataStorage("cha-hum",SoilPrecentValue);
 }
  
 String rts()//计算运行时间
@@ -145,8 +147,6 @@ String rts()//计算运行时间
     }
 
 void miotQuery(int32_t queryCode) //接入小爱模块
-
-
 {
     BLINKER_LOG("MIOT Query codes: ", queryCode);
 
@@ -169,6 +169,7 @@ void miotQuery(int32_t queryCode) //接入小爱模块
             break;
     }
 }
+
 void oledDisplay()
 {
 
@@ -176,22 +177,22 @@ void oledDisplay()
   do
   {
     u8g2.setFont(u8g2_font_helvR10_te);
-    u8g2.setCursor(0, 13);
-    u8g2.print("AWS for YouthGT");
-    u8g2.setCursor(0, 27);
-    u8g2.print("soil humi: " + String(precentsensorValue) + "%");
-    u8g2.setCursor(0, 41);
+    u8g2.setCursor(1, 13);
+    u8g2.print(" ASW BY YouthGT");
+    u8g2.drawLine(0, 15, 128, 15);
+    u8g2.setCursor(0, 29);
+    u8g2.print("Soil Humi: " + String(SoilPrecentValue) + "%");
+    u8g2.setCursor(0, 43);
     if (digitalRead(waterPumpPin) == HIGH)
-      u8g2.print("state: pausing");
+      u8g2.print("Sys State: Pausing");
     else if (digitalRead(waterPumpPin) == LOW)
-      u8g2.print("state: flowering");
-
-    u8g2.drawLine(0, 46, 128, 46);
-
+      u8g2.print("Sys State: Watering");
+    u8g2.drawLine(0, 48, 128, 48);
     u8g2.setCursor(0, 63);
-    u8g2.print("Time:" + String(Blinker.hour()) + ":" + String(Blinker.minute()));
-    u8g2.setCursor(72, 63);
-    u8g2.print("Thre:" + String(sliderValue));
+    u8g2.print("Thre:  H:" + String(SoilSliderValue));
+    //u8g2.print("Time:" + String(Blinker.hour()) + ":" + String(Blinker.minute()));
+    u8g2.setCursor(85, 63);
+    u8g2.print("T:" + String(TempSliderValue));
   } while (u8g2.nextPage());
 }
 
@@ -226,7 +227,7 @@ void setup()
   Blinker.attachDataStorage(dataStorage);//附加数据存储
 
 
-  Blinker.setTimezone(8.0); //获取NTP时间
+  //Blinker.setTimezone(8.0); //获取NTP时间
 
   BtnManual.attach(BtnManual_callback); //初始化手动浇水按键
 
@@ -239,19 +240,23 @@ void loop()
   float h = dht.readHumidity();
   float t = dht.readTemperature();
   sensorValue = analogRead(sensorPin); //读取土壤湿度数据
-  precentsensorValue = float((-(sensorValue - 866)) / 234.0 * 100);//计算土壤湿度
-  //Serial.println(precentsensorValue);
+  SoilPrecentValue = float((-(sensorValue - 866)) / 234.0 * 100);//计算土壤湿度
+  //Serial.println(SoilPrecentValue);
   //Serial.println(manualFlag);
-        humi_read = h;
-        temp_read = t;
-
-  
+      humi_read = h;
+      temp_read = t;
 if (manualFlag = false)                  //手动控制标志位false的时，启动自动浇花
   {
-    if ((precentsensorValue < sliderValue)&&(temp_read < sliderValue1)) //水不足并且温度不高于阈值 则补水
-      digitalWrite(waterPumpPin, LOW);    //开启继电器
-    else                                  //认为水多 不需要启动
-      digitalWrite(waterPumpPin, HIGH);   //关掉继电器
+    if ((SoilPrecentValue <= SoilSliderValue)&&(temp_read <= TempSliderValue  )) //水不足并且温度不高于阈值 则补水
+      {
+        digitalWrite(waterPumpPin, LOW);    //开启继电器
+        Tex2.print("正在浇水");
+      }
+    else//不需要浇水
+      {
+        digitalWrite(waterPumpPin, HIGH);   //关掉继电器
+        Tex2.print("暂停浇水");
+      }
   }
 
   oledDisplay();
