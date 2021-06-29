@@ -1,17 +1,15 @@
+
 //#define BLINKER_WIFI_AUTO
 #define BLINKER_PRINT Serial//串口输出
 #define U8X8_USE_PINS
-
 #define BLINKER_WIFI
 #define BLINKER_ESP_SMARTCONFIG //使用smartconfig配网
-#define BLINKER_MIOT_SENSOR //作为温度传感器接入小爱
-
 #include <SPI.h>         //显示屏SPI传输库
 #include <U8g2lib.h>     //显示屏的库
 #include <Blinker.h>     //Blinker官方库
 #define DHTPIN 15        //对应D8针脚接入DHT11
 #define DHTTYPE DHT11    //选择传感器类型 DHT11
-#include <DHT.h>         //温度传感器运行库     
+#include <DHT.h>         //温度传感器运行库 
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -26,22 +24,15 @@ int TempSliderValue = 20;   //空气温度阈值 通过气温传感器
 bool manualFlag = false; //手动控制默认关闭
 
 U8G2_SSD1306_128X64_NONAME_1_4W_SW_SPI u8g2(U8G2_R0, D5 /*clock*/, D6 /*data*/, D7 /*cs*/, D3 /*dc*/, D4 /*reset*/);//定义OLED的引脚
-
 BlinkerNumber NumSoil("num-soil"); //Blinke上自定义显示土壤湿度
 BlinkerNumber Numtem("num-tem");  //Blinke上自定义显示空气温度
 BlinkerNumber Numhum("num-hum");  //Blinke上自定义显示空气湿度
-
 BlinkerButton BtnManual("btn-manual"); //手动浇花按键
-
 BlinkerSlider Slider1("ran-1"); //设置滑块控制浇水土壤湿度阈值
 BlinkerSlider Slider2("ran-2"); //设置滑块控制浇水空气温度阈值
-
 BlinkerText Tex1("tex-1"); //文本1手动浇水状态
 BlinkerText Tex2("tex-2"); //文本2自动浇水状态
 BlinkerText Tex3("tex-3"); //文本3 时间信息
-
-//char auth[] = "7d29d0baddb6";
-//char type[] = "arduino";
 
 char auth[] = "8fe5abd7fb96"; //key
 char ssid[] = "156";         //wifi name
@@ -92,6 +83,7 @@ void BtnManual_callback(const String &state) //手动浇花按键回调函数
   }
   loop();
 }
+
 void dataRead(const String & data)
 {
     BLINKER_LOG("Blinker readString: ", data);
@@ -103,6 +95,7 @@ void dataRead(const String & data)
     Blinker.print("millis", BlinkerTime);
     
 }
+
 void dataStorage()//数据存储
 {
     Blinker.dataStorage("cha-temp", temp_read);
@@ -146,30 +139,6 @@ String rts()//计算运行时间
     return(fh);
     }
 
-void miotQuery(int32_t queryCode) //接入小爱模块
-{
-    BLINKER_LOG("MIOT Query codes: ", queryCode);
-
-    switch (queryCode)
-    {
-        case BLINKER_CMD_QUERY_HUMI_NUMBER : //给小爱同学返回湿度数据
-            BLINKER_LOG("MIOT Query HUMI");
-            BlinkerMIOT.humi(humi_read); //湿度值
-            BlinkerMIOT.print();
-            break;
-        case BLINKER_CMD_QUERY_TEMP_NUMBER : //给小爱同学返回温度数据
-            BLINKER_LOG("MIOT Query TEMP");
-            BlinkerMIOT.temp(temp_read);  //温度值
-            BlinkerMIOT.print();
-            break;
-        default :                     //默认在传感器没有返回数值的时候播报的数值
-            BlinkerMIOT.temp(0);
-            BlinkerMIOT.humi(0);
-            BlinkerMIOT.print();
-            break;
-    }
-}
-
 void oledDisplay()
 {
 
@@ -178,7 +147,7 @@ void oledDisplay()
   {
     u8g2.setFont(u8g2_font_helvR10_te);
     u8g2.setCursor(1, 13);
-    u8g2.print(" ASW BY YouthGT");
+    u8g2.print(" AWS BY YouthGT");
     u8g2.drawLine(0, 15, 128, 15);
     u8g2.setCursor(0, 29);
     u8g2.print("Soil Humi: " + String(SoilPrecentValue) + "%");
@@ -208,32 +177,21 @@ void setup()
 {
   Serial.begin(115200); //初始化串口
   BLINKER_DEBUG.stream(BLINKER_PRINT);
-
   // 初始化有LED的IO
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);  //关闭指示灯
   pinMode(waterPumpPin, OUTPUT);    //灌溉水泵
   digitalWrite(waterPumpPin, HIGH); //关闭水泵
-
   u8g2Init(); //初始化OLED
   dht.begin();//初始化DHT11温度传感器
-
   Blinker.begin(auth); // 初始化blinker
-
-  BlinkerMIOT.attachQuery(miotQuery);//初始化接入小爱查询端口
-
   Blinker.attachHeartbeat(heartbeat); //心跳包初始化
-
   Blinker.attachDataStorage(dataStorage);//附加数据存储
-
-
-  //Blinker.setTimezone(8.0); //获取NTP时间
-
   BtnManual.attach(BtnManual_callback); //初始化手动浇水按键
-
   Slider1.attach(slider1_callback);        //初始化土壤湿度阈值滑块
   Slider2.attach(slider2_callback);       //初始化空气温度阈值滑块
 }
+
 void loop()
 {
   Blinker.run();
